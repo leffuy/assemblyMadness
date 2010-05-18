@@ -1,5 +1,70 @@
 These are some basic assembly tests that I made for a client. They are all in
 x86 assembly, and compile with the GNU x86 assembler. 
 
+Notes:
+The Complicate CPU-OS Relationship
+The CISC CPU and the OS are Yin and Yang. They are balanced in Tao. x86 
+progressed for the 8086 the 80286 and the 80386 before the Pentium line was 
+designed. 
 
+Protected Mode 
+All x86 is pretty standard from the i386 on. After the i286 added the roles of
+protected, and virtual mode, the OS has a more "embedded" role on the CPU. The
+i386 created better tools for the OS to work on protected mode which Win3.1
+depended heavily on for keeping the the user from accessing "real mod". (Ever
+notice in a MS-DOS prompt in windows how certain "calls" will crash the prompt
+and not the entire machine. I.e. Win7 NTVCMD (nt virtual cmd prompt). In short
+the OS mounts onto the CPU during the first call from POST (power on), and
+activates protected mode and all of it's glory. The birth of user/kernel space
+I would say began it's real birth with x86 protected mode.
+
+Memory Protection and Memory Segmentation 
+A main difference between Linux and Windows is the treatment of files and 
+memory. Linux like it's Unix predecessors utilizes the various rings of 
+protection with the entire Machine's system. (Memory devices, etc etc.). The
+kernel and dirver modules run in ring 0, while user programs run in ring 5. 
+A good example I've found personally is dereferncing memory in linux.
+
+In DOS memory is protected merely from segmenting. The data pointer (DS) needs
+to be segmented with a variables offset and segment addresses. This is done
+using the DS register. Which points to the data segment (defined with the x86
+.data directive).
+The below code snippet shows how to pull values from a "variable" in sys mem.
+	fig 0.1 - Data->memory segmentation:
+	.data
+	 var1 db 42h
+	.code
+	START:
+	 mov ax,seg var1
+	 mov ds,ax
+	 mov al,[var1] ;the byte will be well received now
+
+If the two lines mov ax,seg and mov ds,ax are removed, the "innate" memory
+protection seems to kick in and forces the value 205 to the register al (EAX).
+The positions of the data variable needs to be segmented. (the [] dereferencer
+forces the offset into the current segment of ds holds. The phenomenon of 
+clobbering holds true more so for CISC machines in my opinion. As such ds
+needs the value of the current data segment as defined in the .data directive,
+...hope that makes sense later).
+
+The reverse also holds true due to the segmentation (if it is correct), one
+can write back to the data section. For example:
+	fig 0.2 - Writing to Memory (Data section is stored)
+	mov ax,seg var1
+	mov ds,ax
+	mov [var1],32h ;var1 = 0x32
+	mov al,[var1] ;al = 0x32
+This is completely legal in the DOS world of the x86 line of CPU's. However
+not so much for Linux.
+
+Even after correct segmentation (for data[heap], and stack pointers/address)
+writing to memory even defined in the data section can arise in a segmentation
+fault. This is do to Linux having severe memory protection a feature that 
+makes it a relatively (if not highly) secure operating system. One must use
+sys calls to have the operating system allocate and manage resources via the 
+CPU. In a sense there is kind of a hypervisor between the user and kernel in 
+linux. To get memory allocated to a program, one must allocate space and then
+call the sbrk system call. This will return an assorted amount of "free" 
+memory for the user to use. sbrk is analogous to malloc in C, but is more 
+rudimentary as it is a fundamental system call.
 

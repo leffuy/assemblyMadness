@@ -3,6 +3,7 @@
 
 .DATA
 tehone db 25h
+base db 16
 itoa_buffer db 9 dup(?)
 
 .CODE
@@ -54,8 +55,10 @@ mov dx,OFFSET tehone
 mov ax,SEG tehone
 mov ds,ax
 mov al,[tehone] ; get byte from the buf
+mov ax,SEG base
+mov ds,ax
+mov cx, [base]       ; set base number for decimal
 xor ah, ah       ; set rest of ax to zero
-mov cx, 10       ; set base number for decimal
 call itoa
 
 ;mov dl,25h
